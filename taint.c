@@ -1412,13 +1412,20 @@ PHP_FUNCTION(taint_vsprintf) {
 			break;
 		}
 
-		ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(args), val) {
+		if (IS_STRING == Z_TYPE_P(args)) {
+		    ZVAL_DEREF(val);
+		    if (IS_STRING == Z_TYPE_P(val) && TAINT_POSSIBLE(Z_STR_P(val))) {
+			tainted = 1;
+		    }		    
+		} else {
+		    ZEND_HASH_FOREACH_VAL(Z_ARRVAL_P(args), val) {
 			ZVAL_DEREF(val);
 			if (IS_STRING == Z_TYPE_P(val) && TAINT_POSSIBLE(Z_STR_P(val))) {
-				tainted = 1;
-				break;
+			    tainted = 1;
+			    break;
 			}
-		} ZEND_HASH_FOREACH_END();
+		    } ZEND_HASH_FOREACH_END();		    
+		}
 	} while (0);
 
 	TAINT_O_FUNC(vsprintf)(INTERNAL_FUNCTION_PARAM_PASSTHRU);
