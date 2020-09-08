@@ -1401,7 +1401,7 @@ PHP_FUNCTION(taint_vsprintf) {
 	zend_string *format;
 	int tainted = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), "Sa", &format, &args) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), "Sa", &format, &args) == FAILURE && zend_parse_parameters(ZEND_NUM_ARGS(), "SS", &format, &args) == FAILURE) {
 		RETURN_FALSE;
 	}
 
