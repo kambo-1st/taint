@@ -573,7 +573,24 @@ static zval *php_taint_get_zval_ptr(zend_execute_data *execute_data, int op_type
 		}
 	}
 }
-/* }}} */ 
+/* }}} */
+
+
+static zval *php_taint_get_op_data_zval_ptr(zend_execute_data *execute_data, int op_type, znode_op op, taint_free_op *should_free, int type, int force_ret) /* {{{ */ {
+    if (op_type & (IS_TMP_VAR|IS_VAR)) {
+        return php_taint_get_zval_ptr_tmpvar(execute_data, op.var, should_free);
+    } else {
+        *should_free = NULL;
+        if (op_type == IS_CONST) {
+            return RT_CONSTANT(EX(opline+1), op);
+        } else if (op_type == IS_CV) {
+            return php_taint_get_zval_ptr_cv(execute_data, op.var, type, force_ret);
+        } else {
+            return NULL;
+        }
+    }
+}
+/* }}} */
 
 static zval *php_taint_get_zval_ptr_ptr_var(zend_execute_data *execute_data, uint32_t var, zend_free_op *should_free) /* {{{ */ {
 	zval *ret = EX_VAR(var);
@@ -866,7 +883,7 @@ static int php_taint_binary_assign_op_obj_helper(binary_op_type binary_op, zend_
 			}
 		}
 
-		value = php_taint_get_zval_ptr(execute_data, (opline + 1)->op1_type, (opline + 1)->op1, &free_op_data, BP_VAR_R, 1);
+		value = php_taint_get_op_data_zval_ptr(execute_data, (opline + 1)->op1_type, (opline + 1)->op1, &free_op_data, BP_VAR_R, 1);
 
 		if (Z_OBJ_HT_P(object)->get_property_ptr_ptr
 				&& (var_ptr = Z_OBJ_HT_P(object)->get_property_ptr_ptr(object, property, BP_VAR_RW, NULL)) != NULL) {
@@ -941,7 +958,7 @@ static int php_taint_binary_assign_op_dim_helper(binary_op_type binary_op, zend_
 		}
 
 		php_taint_fetch_dimension_address(&rv, container, dim, opline->op2_type, BP_VAR_RW);
-		value = php_taint_get_zval_ptr(execute_data, (opline + 1)->op1_type, (opline + 1)->op1, &free_op_data, BP_VAR_R, 1);
+		value = php_taint_get_op_data_zval_ptr(execute_data, (opline + 1)->op1_type, (opline + 1)->op1, &free_op_data, BP_VAR_R, 1);
 		ZEND_ASSERT(Z_TYPE(rv) == IS_INDIRECT);
 		var_ptr = Z_INDIRECT(rv);
 
