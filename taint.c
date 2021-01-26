@@ -1240,7 +1240,7 @@ static int php_taint_fcall_handler(zend_execute_data *execute_data) /* {{{ */ {
 	zend_execute_data *call = execute_data->call;
 	zend_function *fbc = call->func;
 
-	if (fbc->type == ZEND_INTERNAL_FUNCTION) {
+	if (fbc->type == ZEND_INTERNAL_FUNCTION && fbc != (zend_function*) &zend_pass_function) {
 		php_taint_fcall_check(call, opline, fbc);
 	}
 
